@@ -1,26 +1,172 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+/* ── Brand tokens ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brown:      #1A0F00;
+  --surface:    #2D1A00;
+  --gold:       #D4A017;
+  --gold-light: #FFD700;
+  --gold-dark:  #8B6914;
+  --cream:      #F5E6C8;
+  --red-banner: #8B0000;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ── Base ── */
+body {
+  overflow-x: hidden;
+  background-color: transparent;
+  color: var(--cream);
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Lato', sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+h1, h2, h3, .font-royal {
+  font-family: 'Cinzel', serif;
+}
+
+/* ── Global fixed background layer ── */
+.global-bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: url('/images/bg_main.png');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  filter: brightness(0.55);
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .global-bg-layer {
+    background-position: center center;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Page content sits above the fixed background ── */
+.page-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── king-bg: transparent passthrough ── */
+.king-bg {
+  min-height: 100vh;
+}
+
+/* ── Input field ── */
+.input-field {
+  width: 100%;
+  border: 1px solid #8B6914;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+  color: #111;
+  background: white;
+  font-family: 'Lato', sans-serif;
+}
+
+.input-field:focus {
+  border-color: #D4A017;
+  box-shadow: 0 0 0 2px rgba(212, 160, 23, 0.25);
+}
+
+/* ── Gold button ── */
+.btn-gold {
+  background: linear-gradient(135deg, #8B6914, #D4A017, #FFD700, #D4A017, #8B6914);
+  color: #1A0F00;
+  font-weight: 900;
+  font-family: 'Cinzel', serif;
+  border-radius: 9999px;
+  padding: 0.75rem 2.5rem;
+  font-size: 1.05rem;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(212, 160, 23, 0.5);
+  transition: all 0.25s;
+  border: none;
+  display: inline-block;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.btn-gold:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 28px rgba(255, 215, 0, 0.6);
+}
+
+.btn-gold:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Brown/dark button ── */
+.btn-brown {
+  background: linear-gradient(135deg, #2D1A00, #4A2D00);
+  color: var(--cream);
+  font-weight: 700;
+  font-family: 'Lato', sans-serif;
+  border-radius: 9999px;
+  padding: 0.75rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--gold-dark);
+  width: 100%;
+}
+
+.btn-brown:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, #3D2500, #5C3800);
+}
+
+.btn-brown:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Price styling ── */
+.price-original {
+  text-decoration: line-through;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.price-prepaid {
+  color: var(--gold-light);
+  font-weight: 900;
+  font-size: 1.5rem;
+  font-family: 'Cinzel', serif;
+}
+
+.price-cod {
+  color: var(--cream);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.price-savings {
+  color: #4ade80;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ── Gold divider ── */
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 1rem 0;
+}
+
+/* ── Card ── */
+.king-card {
+  background: rgba(45, 26, 0, 0.6);
+  border: 1px solid rgba(212, 160, 23, 0.3);
+  border-radius: 1rem;
+  backdrop-filter: blur(6px);
 }
