@@ -27,7 +27,6 @@ interface RazorpayOptions {
   name: string;
   description: string;
   order_id?: string;
-  config?: Record<string, unknown>;
   handler: (response: RazorpayResponse) => Promise<void>;
   prefill: { name: string; contact: string; email: string };
   theme: { color: string };
@@ -138,24 +137,6 @@ export default function CartPage() {
         name: 'African King Herbal',
         description: 'African King Herbal Power Powder — 300g',
         ...(realOrderId ? { order_id: realOrderId } : {}),
-        config: {
-          display: {
-            blocks: {
-              cards: {
-                name: 'Pay with Card or UPI',
-                instruments: [
-                  { method: 'card' },
-                  { method: 'upi' },
-                  { method: 'netbanking' },
-                ],
-              },
-            },
-            sequence: ['block.cards'],
-            preferences: {
-              show_default_blocks: true,
-            },
-          },
-        },
         handler: async (response: RazorpayResponse) => {
           // Verify payment signature on backend if real order_id was created
           if (response.razorpay_signature && response.razorpay_order_id) {
@@ -208,7 +189,7 @@ export default function CartPage() {
         prefill: {
           name,
           contact: phone,
-          email: '',
+          email: 'customer@example.com',
         },
         theme: { color: '#D4A017' },
         modal: {
