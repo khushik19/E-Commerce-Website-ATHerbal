@@ -1,6 +1,6 @@
 'use client';
 // src/app/cart/page.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useAuth } from '../../hooks/useAuth';
 import { saveOrder, validateCoupon, incrementCouponUsage } from '../../lib/firestore';
@@ -38,6 +38,9 @@ const PREPAID_PRICE   = 1199;
 
 export default function CartPage() {
   const { user, userProfile } = useAuth();
+  const [name, setName]                 = useState('');
+  const [phone, setPhone]               = useState('');
+  const [address, setAddress]           = useState('');
   const [couponCode, setCouponCode]     = useState('');
   const [discount, setDiscount]         = useState(0);
   const [couponApplied, setCouponApplied] = useState(false);
@@ -45,6 +48,15 @@ export default function CartPage() {
   const [payLoading, setPayLoading]     = useState(false);
   const [showCOD, setShowCOD]           = useState(false);
   const [quantity, setQuantity]         = useState(1);
+
+  // Pre-fill user details if logged in or saved
+  useEffect(() => {
+    if (userProfile) {
+      if (userProfile.name) setName(userProfile.name);
+      if (userProfile.phone) setPhone(userProfile.phone);
+      if (userProfile.address) setAddress(userProfile.address);
+    }
+  }, [userProfile]);
 
   const totalOriginal   = ORIGINAL_PRICE  * quantity;
   const totalPrepaid    = PREPAID_PRICE   * quantity;
@@ -75,10 +87,19 @@ export default function CartPage() {
     });
 
   const handleRazorpayPayment = async () => {
-    if (!user) {
-      toast.error('Please login first to place an order');
+    if (!name.trim()) {
+      toast.error('Please enter your full name');
       return;
     }
+    if (phone.length < 10) {
+      toast.error('Please enter a valid 10-digit mobile number');
+      return;
+    }
+    if (!address.trim()) {
+      toast.error('Please enter your delivery address');
+      return;
+    }
+
     setPayLoading(true);
 
     try {
@@ -139,10 +160,10 @@ export default function CartPage() {
 
           // Save completed order
           await saveOrder({
-            userId: user.uid,
-            customerName: userProfile?.name || '',
-            phone: userProfile?.phone || '',
-            address: userProfile?.address || '',
+            userId: user?.uid || `guest_${Date.now()}`,
+            customerName: name,
+            phone,
+            address,
             amount: finalPrice,
             paymentMethod: 'razorpay',
             paymentStatus: 'paid',
@@ -160,14 +181,14 @@ export default function CartPage() {
           setPayLoading(false);
         },
         prefill: {
-          name: userProfile?.name || '',
-          contact: userProfile?.phone || '',
-          email: userProfile?.email || '',
+          name,
+          contact: phone,
+          email: '',
         },
         theme: { color: '#D4A017' },
         modal: {
           ondismiss: () => {
-            toast.error('Payment cancelled by user');
+            toast.error('Payment cancelled');
             setPayLoading(false);
           },
         },
@@ -252,6 +273,52 @@ export default function CartPage() {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Delivery Details Form */}
+          <div
+            className="rounded-2xl p-4 mb-4 space-y-3"
+            style={{ background: 'rgba(45,26,0,0.7)', border: '1px solid rgba(212,160,23,0.3)' }}
+          >
+            <div className="text-[#FFD700] font-bold text-sm" style={{ fontFamily: 'Cinzel, serif' }}>
+              Shipping Details
+            </div>
+            <div>
+              <label className="text-[#F5E6C8]/70 text-xs font-medium block mb-1">Full Name *</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your full name"
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="text-[#F5E6C8]/70 text-xs font-medium block mb-1">Mobile Number *</label>
+              <div className="flex">
+                <span className="flex items-center px-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg text-gray-700 text-sm font-semibold select-none">
+                  +91
+                </span>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="10-digit mobile number"
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  className="input-field rounded-l-none"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-[#F5E6C8]/70 text-xs font-medium block mb-1">Delivery Address &amp; City *</label>
+              <textarea
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="House/Flat No., Landmark, City & Pincode"
+                className="input-field"
+                rows={2}
+              />
             </div>
           </div>
 
