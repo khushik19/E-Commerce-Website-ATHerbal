@@ -42,6 +42,7 @@ export interface Order {
   paymentMethod: 'razorpay' | 'COD';
   paymentStatus: 'paid' | 'pending' | 'failed';
   razorpayOrderId?: string;
+  razorpayPaymentId?: string;
   couponCode?: string;
   discountApplied?: number;
   orderStatus: 'placed' | 'confirmed' | 'shipped' | 'delivered';

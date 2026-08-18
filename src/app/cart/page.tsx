@@ -16,8 +16,8 @@ declare global {
 
 interface RazorpayResponse {
   razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
+  razorpay_order_id?: string;
+  razorpay_signature?: string;
 }
 
 interface RazorpayOptions {
@@ -26,7 +26,7 @@ interface RazorpayOptions {
   currency: string;
   name: string;
   description: string;
-  order_id: string;
+  order_id?: string;
   handler: (response: RazorpayResponse) => Promise<void>;
   prefill: { name: string; contact: string; email: string };
   theme: { color: string };
@@ -110,7 +110,7 @@ export default function CartPage() {
         return;
       }
 
-      let orderId = `ak_order_${Date.now()}`;
+      let realOrderId = '';
       try {
         const res = await fetch('/api/create-order', {
           method: 'POST',
@@ -120,11 +120,14 @@ export default function CartPage() {
         if (res.ok) {
           const data = await res.json();
           if (data.orderId || data.order_id) {
-            orderId = data.orderId || data.order_id;
+            const returnedId = data.orderId || data.order_id;
+            if (typeof returnedId === 'string' && returnedId.startsWith('order_')) {
+              realOrderId = returnedId;
+            }
           }
         }
       } catch (e) {
-        console.warn('API create-order fallback to timestamp:', e);
+        console.warn('API create-order note:', e);
       }
 
       const options: RazorpayOptions = {
@@ -133,32 +136,34 @@ export default function CartPage() {
         currency: 'INR',
         name: 'African King Herbal',
         description: 'African King Herbal Power Powder — 300g',
-        order_id: orderId,
+        ...(realOrderId ? { order_id: realOrderId } : {}),
         handler: async (response: RazorpayResponse) => {
-          // Verify payment signature on backend if API route is available
-          try {
-            const verifyRes = await fetch('/api/verify-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
-            if (verifyRes.ok) {
-              const verifyData = await verifyRes.json();
-              if (!verifyData.success) {
-                toast.error('Payment signature verification failed.');
-                setPayLoading(false);
-                return;
+          // Verify payment signature on backend if real order_id was created
+          if (response.razorpay_signature && response.razorpay_order_id) {
+            try {
+              const verifyRes = await fetch('/api/verify-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              });
+              if (verifyRes.ok) {
+                const verifyData = await verifyRes.json();
+                if (!verifyData.success) {
+                  toast.error('Payment signature verification failed.');
+                  setPayLoading(false);
+                  return;
+                }
               }
+            } catch (e) {
+              console.warn('Backend signature verification note:', e);
             }
-          } catch (e) {
-            console.warn('Backend signature verification note:', e);
           }
 
-          // Save completed order
+          // Save completed order to Firestore
           await saveOrder({
             userId: user?.uid || `guest_${Date.now()}`,
             customerName: name,
@@ -167,7 +172,8 @@ export default function CartPage() {
             amount: finalPrice,
             paymentMethod: 'razorpay',
             paymentStatus: 'paid',
-            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpayOrderId: response.razorpay_order_id || `pay_${Date.now()}`,
             couponCode: couponApplied ? couponCode.toUpperCase() : undefined,
             discountApplied: discount,
             orderStatus: 'placed',
@@ -201,7 +207,8 @@ export default function CartPage() {
         setPayLoading(false);
       });
       rzp.open();
-    } catch {
+    } catch (err) {
+      console.error('Razorpay init error:', err);
       toast.error('Payment failed. Please try again.');
       setPayLoading(false);
     }
