@@ -4,27 +4,51 @@ import { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { amount } = await request.json();
+    const body = await request.json();
+    const amount = Number(body.amount);
 
-    if (!amount || amount < 1) {
-      return Response.json({ error: 'Invalid amount' }, { status: 400 });
+    // Convert to paise if passed in Rupees (e.g., 1199 -> 119900)
+    const amountInPaise = amount < 100 ? Math.round(amount * 100) : Math.round(amount);
+
+    // Minimum amount requirement: 100 paise (₹1)
+    if (isNaN(amountInPaise) || amountInPaise < 100) {
+      return Response.json(
+        { error: 'Invalid amount. Minimum amount is 100 paise (₹1).' },
+        { status: 400 }
+      );
     }
 
-    // Lazily initialize Razorpay inside the handler — env vars are available at runtime
+    const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    if (!keyId || !keySecret) {
+      return Response.json(
+        { error: 'Razorpay API credentials missing on server.' },
+        { status: 500 }
+      );
+    }
+
     const razorpay = new Razorpay({
-      key_id:     process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
-      key_secret: process.env.RAZORPAY_KEY_SECRET!,
+      key_id: keyId,
+      key_secret: keySecret,
     });
 
+    const receipt = `ak_order_${Date.now()}`;
     const order = await razorpay.orders.create({
-      amount:   Math.round(amount * 100), // convert to paise
+      amount: amountInPaise,
       currency: 'INR',
-      receipt:  `ak_order_${Date.now()}`,
+      receipt,
     });
 
-    return Response.json({ orderId: order.id, amount });
-  } catch (error) {
+    return Response.json({
+      orderId: order.id,
+      order_id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+    });
+  } catch (error: unknown) {
     console.error('Razorpay order creation error:', error);
-    return Response.json({ error: 'Failed to create payment order' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to create payment order';
+    return Response.json({ error: message }, { status: 500 });
   }
 }

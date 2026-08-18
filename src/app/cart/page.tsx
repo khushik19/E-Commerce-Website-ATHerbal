@@ -10,8 +10,14 @@ import toast from 'react-hot-toast';
 
 declare global {
   interface Window {
-    Razorpay: new (options: RazorpayOptions) => { open: () => void };
+    Razorpay: new (options: RazorpayOptions) => { open: () => void; on: (event: string, handler: (resp: unknown) => void) => void };
   }
+}
+
+interface RazorpayResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
 }
 
 interface RazorpayOptions {
@@ -21,7 +27,7 @@ interface RazorpayOptions {
   name: string;
   description: string;
   order_id: string;
-  handler: (response: { razorpay_payment_id: string; razorpay_order_id: string }) => void;
+  handler: (response: RazorpayResponse) => Promise<void>;
   prefill: { name: string; contact: string; email: string };
   theme: { color: string };
   modal: { ondismiss: () => void };
@@ -92,20 +98,46 @@ export default function CartPage() {
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.orderId) orderId = data.orderId;
+          if (data.orderId || data.order_id) {
+            orderId = data.orderId || data.order_id;
+          }
         }
-      } catch {
-        // Fallback for static exports
+      } catch (e) {
+        console.warn('API create-order fallback to timestamp:', e);
       }
 
       const options: RazorpayOptions = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TRKCjguU6OTZrK',
         amount: finalPrice * 100,
         currency: 'INR',
         name: 'African King Herbal',
         description: 'African King Herbal Power Powder — 300g',
         order_id: orderId,
-        handler: async (response) => {
+        handler: async (response: RazorpayResponse) => {
+          // Verify payment signature on backend if API route is available
+          try {
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+            if (verifyRes.ok) {
+              const verifyData = await verifyRes.json();
+              if (!verifyData.success) {
+                toast.error('Payment signature verification failed.');
+                setPayLoading(false);
+                return;
+              }
+            }
+          } catch (e) {
+            console.warn('Backend signature verification note:', e);
+          }
+
+          // Save completed order
           await saveOrder({
             userId: user.uid,
             customerName: userProfile?.name || '',
@@ -134,11 +166,20 @@ export default function CartPage() {
         },
         theme: { color: '#D4A017' },
         modal: {
-          ondismiss: () => setPayLoading(false),
+          ondismiss: () => {
+            toast.error('Payment cancelled by user');
+            setPayLoading(false);
+          },
         },
       };
 
-      new window.Razorpay(options).open();
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (resp: unknown) {
+        console.error('Razorpay payment failed:', resp);
+        toast.error('Payment failed. Please try again.');
+        setPayLoading(false);
+      });
+      rzp.open();
     } catch {
       toast.error('Payment failed. Please try again.');
       setPayLoading(false);
