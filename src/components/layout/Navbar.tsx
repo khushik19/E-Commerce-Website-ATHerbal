@@ -9,10 +9,10 @@ import { PhoneOTPForm } from '../popups/PhoneOTPForm';
 
 const NAV_LINKS = [
   { href: '/',            label: 'Home' },
-  { href: '/benefits',    label: 'Benefits' },
-  { href: '/ingredients', label: 'Ingredients' },
-  { href: '/reviews',     label: 'Reviews' },
-  { href: '/how-to-use',  label: 'How to Use' },
+  { href: '/#benefits',    label: 'Benefits' },
+  { href: '/#ingredients', label: 'Ingredients' },
+  { href: '/#how-to-use',  label: 'How to Use' },
+  { href: '/#reviews',     label: 'Reviews' },
 ];
 
 export function Navbar() {
@@ -35,7 +35,7 @@ export function Navbar() {
   }, [profileOpen]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-black/30 backdrop-blur-sm border-b border-[#D4A017]/20">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-black/40 backdrop-blur-md border-b border-[#D4A017]/20">
 
       {/* ── Main bar ── */}
       <div className="flex items-center justify-between px-3 sm:px-5 py-1.5 max-w-7xl mx-auto">
@@ -116,7 +116,7 @@ export function Navbar() {
                 </>
               ) : (
                 <div className="px-4 py-4">
-                  <p className="text-xs text-gray-500 mb-3 text-center">Login or register with your phone</p>
+                  <p className="text-xs text-gray-500 mb-3 text-center">Submit details for special offer</p>
                   <PhoneOTPForm onSuccess={close} />
                 </div>
               )}
@@ -132,9 +132,9 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* ── Mobile slide-down menu ── */}
+      {/* ── Mobile slide-down dropdown menu ── */}
       {menuOpen && (
-        <div className="md:hidden bg-[#1A0F00]/90 backdrop-blur-md border-t border-[#D4A017]/20 px-4 py-3 shadow-2xl">
+        <div className="md:hidden bg-[#1A0F00]/95 backdrop-blur-md border-t border-[#D4A017]/20 px-4 py-3 shadow-2xl">
           <div className="flex flex-col gap-1 max-w-7xl mx-auto">
             {NAV_LINKS.map(({ href, label }) => (
               <Link
