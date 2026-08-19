@@ -7,18 +7,18 @@ export function LoginPopup() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    // Check if user dismissed the popup in the current tab session
-    const dismissed = sessionStorage.getItem('ak_popup_dismissed');
-    if (dismissed) return;
+    // Check if user already submitted details in the current tab session
+    const submitted = sessionStorage.getItem('ak_popup_submitted');
+    if (submitted) return;
 
-    // Show popup after 2 seconds on page load
-    const timer = setTimeout(() => setShow(true), 2000);
+    // Show mandatory popup after 15 seconds of viewing website
+    const timer = setTimeout(() => setShow(true), 15000);
     return () => clearTimeout(timer);
   }, []);
 
-  const handleClose = () => {
+  const handleSuccess = () => {
     setShow(false);
-    sessionStorage.setItem('ak_popup_dismissed', 'true');
+    sessionStorage.setItem('ak_popup_submitted', 'true');
   };
 
   if (!show) return null;
@@ -32,15 +32,6 @@ export function LoginPopup() {
         className="w-full max-w-md shadow-2xl relative rounded-2xl p-6 sm:p-8"
         style={{ background: '#1A0F00', border: '1px solid rgba(212,160,23,0.45)' }}
       >
-        {/* Close button */}
-        <button
-          onClick={handleClose}
-          className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/60 text-[#FFD700] flex items-center justify-center font-bold text-lg border border-[#D4A017]/40 hover:bg-black transition-colors"
-          aria-label="Close popup"
-        >
-          ×
-        </button>
-
         {/* Header */}
         <div className="text-center mb-6 pt-2">
           <div className="text-4xl mb-2">👑</div>
@@ -53,7 +44,7 @@ export function LoginPopup() {
         </div>
 
         {/* Form */}
-        <PhoneOTPForm onSuccess={handleClose} />
+        <PhoneOTPForm onSuccess={handleSuccess} />
       </div>
     </div>
   );
