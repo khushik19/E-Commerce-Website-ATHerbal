@@ -28,7 +28,7 @@ interface RazorpayOptions {
   description: string;
   order_id?: string;
   handler: (response: RazorpayResponse) => Promise<void>;
-  prefill: { name: string; contact: string; email: string };
+  prefill: { name: string; contact: string; email?: string };
   theme: { color: string };
   modal: { ondismiss: () => void };
 }
@@ -131,7 +131,7 @@ export default function CartPage() {
       }
 
       const options: RazorpayOptions = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TRWMQs5pFsy',
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TRWMQs5pFsy57Z',
         amount: finalPrice * 100,
         currency: 'INR',
         name: 'African King Herbal',
@@ -187,9 +187,9 @@ export default function CartPage() {
           setPayLoading(false);
         },
         prefill: {
-          name,
-          contact: phone,
-          email: '',
+          name: name.trim(),
+          contact: phone.trim(),
+          email: userProfile?.email || 'customer@africankingatherbal.com',
         },
         theme: { color: '#D4A017' },
         modal: {
