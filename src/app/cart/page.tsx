@@ -132,7 +132,7 @@ export default function CartPage() {
       }
 
       const options: RazorpayOptions = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TRKCjguU6OTZrK',
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TRWMQs5pFsy',
         amount: finalPrice * 100,
         currency: 'INR',
         name: 'African King Herbal',
